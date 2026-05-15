@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global News Hub — AI & 주식</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-top">
+                <div class="logo">
+                    <div class="logo-icon">📡</div>
+                    <div>
+                        <h1>Global News Hub</h1>
+                        <p class="logo-sub">AI &amp; 주식 글로벌 뉴스</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <span id="last-updated" class="last-updated"></span>
+                    <button id="refresh-btn" class="refresh-btn" title="새로고침">↻</button>
+                </div>
+            </div>
+            <nav class="category-nav">
+                <button class="cat-btn active" data-category="ai">
+                    <span class="cat-icon">🤖</span><span>AI</span>
+                </button>
+                <button class="cat-btn" data-category="stock">
+                    <span class="cat-icon">📰</span><span>주식 뉴스</span>
+                </button>
+                <button class="cat-btn" data-category="stocks">
+                    <span class="cat-icon">💹</span><span>해외주식</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+
+            <!-- ── AI 뉴스 뷰 ── -->
+            <div id="ai-view" class="view-section">
+                <div id="ai-loading" class="loading">
+                    <div class="spinner"></div>
+                    <p id="ai-loading-text">뉴스를 불러오는 중...</p>
+                </div>
+                <div id="ai-error" class="error-msg hidden"></div>
+
+                <div id="ai-overview" class="hidden">
+                    <div class="news-cat-bar" id="ai-cat-bar"></div>
+                    <div id="ai-overview-grid" class="cat-overview-grid"></div>
+                </div>
+
+                <div id="ai-detail" class="hidden">
+                    <div class="detail-header">
+                        <button class="back-btn" id="ai-back-btn">← 전체 보기</button>
+                        <h3 id="ai-detail-title" class="detail-title"></h3>
+                    </div>
+                    <div class="search-wrap">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" id="ai-search" placeholder="기사 제목, 출처 검색...">
+                        <button class="search-clear" id="ai-search-clear" title="지우기">✕</button>
+                    </div>
+                    <p class="search-count hidden" id="ai-search-count"></p>
+                    <div id="ai-detail-list" class="news-list-view"></div>
+                </div>
+            </div>
+
+            <!-- ── 주식 뉴스 뷰 ── -->
+            <div id="sn-view" class="view-section hidden">
+                <div class="news-cat-bar" id="sn-cat-bar"></div>
+                <div class="search-wrap">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="sn-search" placeholder="기사 제목, 종목, 출처 검색...">
+                    <button class="search-clear" id="sn-search-clear" title="지우기">✕</button>
+                </div>
+                <p class="search-count hidden" id="sn-search-count"></p>
+                <div id="sn-loading" class="loading hidden">
+                    <div class="spinner" style="border-top-color:#10b981"></div>
+                    <p id="sn-loading-text">뉴스를 불러오는 중...</p>
+                </div>
+                <div id="sn-error" class="error-msg hidden"></div>
+                <div id="sn-list" class="news-list-view"></div>
+            </div>
+
+            <!-- ── 해외주식 뷰 ── -->
+            <div id="stocks-view" class="view-section hidden">
+                <div class="stocks-topbar">
+                    <div class="stock-cats" id="stock-cats"></div>
+                    <div class="market-info">
+                        <span class="market-dot" id="market-dot"></span>
+                        <span id="market-label">--</span>
+                        <span id="krw-rate" class="krw-rate"></span>
+                    </div>
+                </div>
+                <div class="search-wrap search-wrap-stock">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="stock-search" placeholder="종목 검색 (AAPL, 애플, 엔비디아...)">
+                    <button class="search-clear" id="stock-search-clear" title="지우기">✕</button>
+                </div>
+                <div id="stock-loading" class="loading hidden">
+                    <div class="spinner" style="border-top-color:#f59e0b"></div>
+                    <p>주가 데이터 불러오는 중...</p>
+                </div>
+                <div id="stock-error" class="error-msg hidden"></div>
+                <div id="stock-grid" class="stock-grid"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ── 차트 모달 ── -->
+    <div id="chart-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-info">
+                    <div class="sc-badge modal-badge" id="modal-badge">--</div>
+                    <div>
+                        <div class="modal-ticker" id="modal-ticker">--</div>
+                        <div class="modal-name" id="modal-name">--</div>
+                    </div>
+                </div>
+                <div class="modal-prices">
+                    <div class="modal-price-krw" id="modal-price-krw">--</div>
+                    <div class="modal-price-sub">
+                        <span id="modal-price-usd" class="modal-usd">--</span>
+                        <span class="modal-change-badge" id="modal-change-badge">--</span>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="modal-close">✕</button>
+            </div>
+            <div class="modal-range">
+                <button class="range-btn active" data-range="1mo">1개월</button>
+                <button class="range-btn" data-range="3mo">3개월</button>
+                <button class="range-btn" data-range="6mo">6개월</button>
+                <button class="range-btn" data-range="1y">1년</button>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="price-chart"></canvas>
+                <div id="chart-loading-overlay" class="chart-loading-overlay">
+                    <div class="spinner" style="border-top-color:#3b82f6;width:28px;height:28px;border-width:2px"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2026 Global News Hub &nbsp;·&nbsp; AI &amp; 주식 글로벌 뉴스</p>
+            <p class="footer-sources">뉴스: TechCrunch · The Verge · VentureBeat · Wired &nbsp;|&nbsp; 주가: Yahoo Finance</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "it-news",
+  "version": "1.0.0",
+  "description": "AI & 주식 글로벌 뉴스",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-cron": "^4.2.1",
+    "rss-parser": "^3.13.0",
+    "yahoo-finance2": "^3.14.0"
+  }
+}
