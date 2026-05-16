@@ -35,6 +35,9 @@
                 <button class="cat-btn" data-category="stocks">
                     <span class="cat-icon">💹</span><span>해외주식</span>
                 </button>
+                <button class="cat-btn" data-category="code">
+                    <span class="cat-icon">💻</span><span>AI 코딩</span>
+                </button>
             </nav>
         </div>
     </header>
@@ -113,6 +116,34 @@
                 </div>
                 <div id="stock-error" class="error-msg hidden"></div>
                 <div id="stock-grid" class="stock-grid"></div>
+            </div>
+
+            <!-- ── AI 코딩 뷰 ── -->
+            <div id="code-view" class="view-section hidden">
+                <div id="code-loading" class="loading">
+                    <div class="spinner" style="border-top-color:#8b5cf6"></div>
+                    <p id="code-loading-text">뉴스를 불러오는 중...</p>
+                </div>
+                <div id="code-error" class="error-msg hidden"></div>
+
+                <div id="code-overview" class="hidden">
+                    <div class="news-cat-bar" id="code-cat-bar"></div>
+                    <div id="code-overview-grid" class="cat-overview-grid"></div>
+                </div>
+
+                <div id="code-detail" class="hidden">
+                    <div class="detail-header">
+                        <button class="back-btn" id="code-back-btn">← 전체 보기</button>
+                        <h3 id="code-detail-title" class="detail-title"></h3>
+                    </div>
+                    <div class="search-wrap">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" id="code-search" placeholder="기사 제목, 출처 검색...">
+                        <button class="search-clear" id="code-search-clear" title="지우기">✕</button>
+                    </div>
+                    <p class="search-count hidden" id="code-search-count"></p>
+                    <div id="code-detail-list" class="news-list-view"></div>
+                </div>
             </div>
 
         </div>

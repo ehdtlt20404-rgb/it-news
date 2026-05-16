@@ -27,6 +27,16 @@ const NEWS_FEEDS = {
         { url: 'https://www.wired.com/feed/tag/ai/latest/rss', name: 'Wired' },
         { url: 'https://arstechnica.com/ai/feed/', name: 'Ars Technica' },
         { url: 'https://techcrunch.com/feed/', name: 'TechCrunch (전체)' },
+    ],
+    code: [
+        { url: 'https://github.blog/feed/', name: 'GitHub Blog' },
+        { url: 'https://stackoverflow.blog/feed/', name: 'Stack Overflow' },
+        { url: 'https://dev.to/feed', name: 'Dev.to' },
+        { url: 'https://www.smashingmagazine.com/feed/', name: 'Smashing Magazine' },
+        { url: 'https://css-tricks.com/feed/', name: 'CSS-Tricks' },
+        { url: 'https://www.infoq.com/feed/', name: 'InfoQ' },
+        { url: 'https://news.ycombinator.com/rss', name: 'Hacker News' },
+        { url: 'https://arstechnica.com/gadgets/feed/', name: 'Ars Technica Dev' },
     ]
 };
 
@@ -65,6 +75,19 @@ async function updateKrwRate() {
     }
 }
 
+// ── Code Categorizer ────────────────────────────────────
+
+function categorizeCode(title = '', desc = '') {
+    const t = (title + ' ' + desc).toLowerCase();
+    if (/copilot|cursor|vibe.?cod|ai.?cod|codeium|tabnine|windsurf|replit|lovable|bolt\.new|v0\.dev|devin|swe.?agent|agentic.?cod|code.?gen|code.?assist|ghostwriter/.test(t)) return 'AI 코딩 도구';
+    if (/react|vue|angular|next\.js|svelte|remix|astro|css|html|frontend|web.?dev|javascript|typescript|node\.js/.test(t)) return '웹 개발';
+    if (/docker|kubernetes|k8s|aws|cloud|gcp|azure|backend|graphql|rest.?api|database|postgres|mysql|redis|devops|ci.?cd|terraform/.test(t)) return '백엔드/인프라';
+    if (/open.?source|github|git|npm|package|library|framework|sdk|release|version \d/.test(t)) return '오픈소스';
+    if (/rust|python|go\b|golang|java\b|swift|kotlin|c\+\+|ruby|php|programming language|compiler|wasm|webassembly/.test(t)) return '프로그래밍 언어';
+    if (/security|vulnerab|exploit|patch|cve|breach|hack/.test(t)) return '보안';
+    return '개발 트렌드';
+}
+
 // ── AI Categorizer ──────────────────────────────────────
 
 function categorizeAI(title = '', desc = '') {
@@ -82,6 +105,32 @@ function categorizeAI(title = '', desc = '') {
 
 function withTimeout(p, ms) {
     return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), ms))]);
+}
+
+// ── News (Code) ─────────────────────────────────────────
+
+async function fetchCodeNews() {
+    const now = Date.now();
+    if (cache['code'] && now - cache['code'].ts < NEWS_TTL) return cache['code'].data;
+
+    console.log('[fetch] 코딩 뉴스 수집 중...');
+    const results = await Promise.allSettled(NEWS_FEEDS.code.map(fetchFeed));
+    const articles = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value)
+        .filter(a => a.title && a.link)
+        .sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
+
+    const seen = new Set();
+    const unique = articles.filter(a => {
+        const k = a.title.slice(0, 60).toLowerCase();
+        if (seen.has(k)) return false;
+        seen.add(k); return true;
+    }).slice(0, 120);
+
+    unique.forEach(a => { a.codeCategory = categorizeCode(a.title, a.description); });
+
+    console.log(`[done] 코딩: ${unique.length}개`);
+    cache['code'] = { data: unique, ts: now };
+    return unique;
 }
 
 // ── News (AI) ───────────────────────────────────────────
@@ -252,6 +301,16 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
+app.get('/api/code-news', async (req, res) => {
+    try {
+        const articles = await fetchCodeNews();
+        res.json({ articles, count: articles.length });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: '코딩 뉴스 수집 실패' });
+    }
+});
+
 app.get('/api/stock-news', async (req, res) => {
     const { cat } = req.query;
     if (!STOCK_NEWS_SYMS[cat]) return res.status(400).json({ error: 'invalid category' });
@@ -306,6 +365,7 @@ async function doSync(label) {
     await Promise.allSettled([
         updateKrwRate(),
         fetchAINews(),
+        fetchCodeNews(),
     ]);
     lastSyncDate = todayKST();
     console.log(`[Cron] ✅ ${label} 동기화 완료\n`);
@@ -338,5 +398,6 @@ app.listen(PORT, async () => {
     await updateKrwRate();
     setInterval(updateKrwRate, 5 * 60 * 1000);  // 5분마다 환율 갱신
     await fetchAINews().catch(() => {});
+    await fetchCodeNews().catch(() => {});
     lastSyncDate = todayKST();
 });

@@ -2,7 +2,8 @@
 
 // ── Config ─────────────────────────────────────────────
 
-const AI_CATS = ['AI 모델','AI 하드웨어','AI 정책','AI 로봇','AI 연구','AI 도구','일반 AI'];
+const AI_CATS   = ['AI 모델','AI 하드웨어','AI 정책','AI 로봇','AI 연구','AI 도구','일반 AI'];
+const CODE_CATS = ['AI 코딩 도구','웹 개발','백엔드/인프라','오픈소스','프로그래밍 언어','보안','개발 트렌드'];
 
 const SN_CATS = [
     { id: 'indices', label: '📊 주요 지수' },
@@ -42,10 +43,12 @@ const TICKER_COLORS = ['#3b82f6','#8b5cf6','#f59e0b','#10b981','#ef4444','#06b6d
 
 let currentView     = 'ai';
 let currentAICat    = null;
+let currentCodeCat  = null;
 let currentSNCat    = 'us';
 let currentStockCat = 'indices';
-let loadedStockCat  = null;   // 현재 그리드에 렌더된 카테고리
+let loadedStockCat  = null;
 let allAIArticles   = [];
+let allCodeArticles = [];
 let stockRefreshTimer = null;
 
 // ── Translation ────────────────────────────────────────
@@ -194,6 +197,105 @@ document.getElementById('ai-back-btn').addEventListener('click', () => {
     currentAICat = null;
     hide('ai-detail');
     show('ai-overview');
+});
+
+// ── Code View ──────────────────────────────────────────
+
+async function loadCodeNews() {
+    showCodeLoading('뉴스를 불러오는 중...');
+    hide('code-overview'); hide('code-detail'); hide('code-error');
+
+    let raw;
+    try {
+        const res = await fetch('/api/code-news');
+        if (!res.ok) throw new Error();
+        raw = (await res.json()).articles || [];
+    } catch {
+        hideCodeLoading(); showCodeError('뉴스를 불러오는데 실패했습니다.'); return;
+    }
+
+    allCodeArticles = raw;
+    hideCodeLoading();
+    renderCodeCatOverview();
+    show('code-overview');
+    updateLastUpdated();
+    translateCodeOverviewTitles();
+}
+
+function renderCodeCatOverview() {
+    const bar = document.getElementById('code-cat-bar');
+    bar.innerHTML = '';
+    CODE_CATS.forEach(cat => {
+        const count = allCodeArticles.filter(a => a.codeCategory === cat).length;
+        if (count === 0) return;
+        const btn = document.createElement('button');
+        btn.className = 'news-cat-btn';
+        btn.textContent = `${cat} (${count})`;
+        btn.addEventListener('click', () => showCodeCatDetail(cat));
+        bar.appendChild(btn);
+    });
+
+    const grid = document.getElementById('code-overview-grid');
+    grid.innerHTML = '';
+    CODE_CATS.forEach(cat => {
+        const articles = allCodeArticles.filter(a => a.codeCategory === cat);
+        if (!articles.length) return;
+        const latest = articles[0];
+        const img = validImg(latest.thumbnail);
+        const card = document.createElement('div');
+        card.className = 'cat-card';
+        card.innerHTML = `
+            <div class="cat-card-head">
+                <span class="cat-card-label">${eh(cat)}</span>
+                <span class="cat-card-count code-count">${articles.length}개</span>
+            </div>
+            ${img
+                ? `<img class="cat-card-img" src="${ea(img)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+                : `<div class="cat-card-img-placeholder" style="background:linear-gradient(135deg,#3b1f6e,#1e1b4b)"></div>`}
+            <div class="cat-card-body">
+                <div class="cat-card-title" data-ov-code-cat="${ea(cat)}">${eh(latest.title)}</div>
+                <div class="cat-card-meta">
+                    <span>${eh(latest.sourceName)}</span>
+                    <span>${formatDate(latest.pubDate)}</span>
+                </div>
+            </div>
+            <span class="cat-card-more code-more">목록 보기 →</span>`;
+        card.addEventListener('click', () => showCodeCatDetail(cat));
+        grid.appendChild(card);
+    });
+}
+
+async function translateCodeOverviewTitles() {
+    for (const cat of CODE_CATS) {
+        const articles = allCodeArticles.filter(a => a.codeCategory === cat);
+        if (!articles.length) continue;
+        const latest = articles[0];
+        const kr = await translate(latest.title).catch(() => latest.title);
+        if (kr !== latest.title) {
+            latest.title = kr;
+            const el = document.querySelector(`[data-ov-code-cat="${ea(cat)}"]`);
+            if (el) el.textContent = kr;
+        }
+    }
+}
+
+function showCodeCatDetail(cat) {
+    currentCodeCat = cat;
+    hide('code-overview');
+    document.getElementById('code-detail-title').textContent = cat;
+    document.getElementById('code-search').value = '';
+    hide('code-search-count');
+
+    const articles = allCodeArticles.filter(a => a.codeCategory === cat).map(a => ({ ...a }));
+    const container = document.getElementById('code-detail-list');
+    renderAndTranslateList(articles, container, 'purple');
+    show('code-detail');
+}
+
+document.getElementById('code-back-btn').addEventListener('click', () => {
+    currentCodeCat = null;
+    hide('code-detail');
+    show('code-overview');
 });
 
 // ── Stock News View ────────────────────────────────────
@@ -603,7 +705,7 @@ function renderNewsListItem(a, theme = 'blue', idx = -1) {
             ${img ? `<img class="nl-img" src="${ea(img)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
             <div class="nl-body">
                 <div class="nl-meta">
-                    <span class="nl-source ${theme === 'green' ? 'green' : ''}">${eh(a.sourceName)}</span>
+                    <span class="nl-source ${theme === 'green' ? 'green' : theme === 'purple' ? 'purple' : ''}">${eh(a.sourceName)}</span>
                     ${sym ? `<span class="nl-sym">${eh(sym.replace('^',''))}</span>` : ''}
                     <span class="nl-date">${formatDate(a.pubDate)}</span>
                 </div>
@@ -684,7 +786,7 @@ function updateMarketStatus(state, rate) {
 
 function switchView(view) {
     currentView = view;
-    ['ai-view','sn-view','stocks-view'].forEach(id => hide(id));
+    ['ai-view','sn-view','stocks-view','code-view'].forEach(id => hide(id));
 
     if (view === 'ai') {
         show('ai-view');
@@ -692,6 +794,9 @@ function switchView(view) {
     } else if (view === 'stock') {
         show('sn-view');
         loadStockNews(currentSNCat);
+    } else if (view === 'code') {
+        show('code-view');
+        if (allCodeArticles.length === 0) loadCodeNews();
     } else {
         show('stocks-view');
         loadStocks(currentStockCat);
@@ -734,9 +839,12 @@ function ea(s) { return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); 
 function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
 function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
 
-function showAILoading(t)  { document.getElementById('ai-loading-text').textContent = t; show('ai-loading'); }
-function hideAILoading()   { hide('ai-loading'); }
-function showAIError(m)    { document.getElementById('ai-error').textContent = m; show('ai-error'); }
+function showAILoading(t)   { document.getElementById('ai-loading-text').textContent = t; show('ai-loading'); }
+function hideAILoading()    { hide('ai-loading'); }
+function showAIError(m)     { document.getElementById('ai-error').textContent = m; show('ai-error'); }
+function showCodeLoading(t) { document.getElementById('code-loading-text').textContent = t; show('code-loading'); }
+function hideCodeLoading()  { hide('code-loading'); }
+function showCodeError(m)   { document.getElementById('code-error').textContent = m; show('code-error'); }
 function showSNLoading(t)  { document.getElementById('sn-loading-text').textContent = t; show('sn-loading'); }
 function hideSNLoading()   { hide('sn-loading'); }
 function showSNError(m)    { document.getElementById('sn-error').innerHTML = m; show('sn-error'); }
@@ -769,6 +877,9 @@ STOCK_CATS.forEach(cat => {
 setupNewsSearch('ai-search', 'ai-search-clear', 'ai-search-count',
     () => document.querySelectorAll('#ai-detail-list .nl-item'));
 
+setupNewsSearch('code-search', 'code-search-clear', 'code-search-count',
+    () => document.querySelectorAll('#code-detail-list .nl-item'));
+
 setupStockSearch();
 
 // ── Events ─────────────────────────────────────────────
@@ -777,7 +888,7 @@ document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        switchView({ ai: 'ai', stock: 'stock', stocks: 'stocks' }[btn.dataset.category]);
+        switchView({ ai: 'ai', stock: 'stock', stocks: 'stocks', code: 'code' }[btn.dataset.category]);
     });
 });
 
@@ -785,6 +896,7 @@ document.getElementById('refresh-btn').addEventListener('click', () => {
     if (currentView === 'ai')     { allAIArticles = []; loadAINews(); }
     if (currentView === 'stock')  loadStockNews(currentSNCat);
     if (currentView === 'stocks') loadStocks(currentStockCat);
+    if (currentView === 'code')   { allCodeArticles = []; loadCodeNews(); }
 });
 
 // ── Init ───────────────────────────────────────────────

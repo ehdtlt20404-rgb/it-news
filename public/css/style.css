@@ -69,6 +69,7 @@ body {
 .cat-btn.active[data-category="ai"]     { color: #93c5fd; border-bottom-color: #3b82f6; background: rgba(59,130,246,.08); }
 .cat-btn.active[data-category="stock"]  { color: #6ee7b7; border-bottom-color: #10b981; background: rgba(16,185,129,.08); }
 .cat-btn.active[data-category="stocks"] { color: #fcd34d; border-bottom-color: #f59e0b; background: rgba(245,158,11,.08); }
+.cat-btn.active[data-category="code"]   { color: #c4b5fd; border-bottom-color: #8b5cf6; background: rgba(139,92,246,.08); }
 
 /* ── Main ── */
 main { padding: 32px 0 48px; }
@@ -195,7 +196,11 @@ main { padding: 32px 0 48px; }
   font-size: 11px; font-weight: 700; padding: 2px 8px;
   background: var(--ai-light); color: var(--ai-color); border-radius: 20px;
 }
-.nl-source.green { background: var(--stock-light); color: var(--stock-color); }
+.nl-source.green  { background: var(--stock-light); color: var(--stock-color); }
+.nl-source.purple { background: #f5f3ff; color: #7c3aed; }
+.nl-item:hover .nl-title.purple-hover { color: #8b5cf6; }
+.code-count { background: #f5f3ff !important; color: #7c3aed !important; }
+.code-more  { color: #8b5cf6 !important; }
 .nl-sym {
   font-size: 11px; font-weight: 600; padding: 2px 6px;
   background: #fef9c3; color: #854d0e; border-radius: 4px;
