@@ -198,16 +198,17 @@ document.getElementById('ai-back-btn').addEventListener('click', () => {
 
 // ── Stock News View ────────────────────────────────────
 
+let snGroupedCache = {};  // catId → grouped news
+
 async function loadStockNews(catId) {
     currentSNCat = catId;
     document.querySelectorAll('#sn-cat-bar .news-cat-btn').forEach(b =>
         b.classList.toggle('active', b.dataset.cat === catId));
 
+    show('sn-overview'); hide('sn-detail');
     showSNLoading('뉴스를 불러오는 중...');
     hide('sn-error');
-    document.getElementById('sn-list').innerHTML = '';
-    document.getElementById('sn-search').value = '';
-    hide('sn-search-count');
+    document.getElementById('sn-company-grid').innerHTML = '';
 
     let raw;
     try {
@@ -219,10 +220,91 @@ async function loadStockNews(catId) {
     }
 
     hideSNLoading();
-    const articles = raw.map(a => ({ ...a }));
-    renderAndTranslateList(articles, document.getElementById('sn-list'), 'green');
+
+    // 종목별로 그룹화 (날짜 최신순 유지)
+    const grouped = {};
+    raw.forEach(a => {
+        if (!a.symbol) return;
+        if (!grouped[a.symbol]) grouped[a.symbol] = [];
+        grouped[a.symbol].push(a);
+    });
+
+    snGroupedCache[catId] = grouped;
+    renderSNCompanyGrid(grouped);
     updateLastUpdated();
 }
+
+function renderSNCompanyGrid(grouped) {
+    const grid = document.getElementById('sn-company-grid');
+    const symbols = Object.keys(grouped);
+    if (!symbols.length) {
+        grid.innerHTML = '<p class="no-results">뉴스가 없습니다.</p>';
+        return;
+    }
+
+    grid.innerHTML = symbols.map(sym => {
+        const articles = grouped[sym];
+        const latest   = articles[0];
+        const name     = KR_NAMES[sym] || sym;
+        const color    = tickerColor(sym);
+        return `
+            <div class="sn-company-card" data-symbol="${ea(sym)}">
+                <div class="sn-card-header">
+                    <div class="sc-badge" style="background:${color}">${tickerLabel(sym)}</div>
+                    <div class="sn-card-info">
+                        <div class="sc-ticker">${eh(sym.replace('^',''))}</div>
+                        <div class="sc-name">${eh(name)}</div>
+                    </div>
+                    <span class="sn-news-count">${articles.length}개</span>
+                </div>
+                <div class="sn-card-headline">${eh(latest.title)}</div>
+                <div class="sn-card-meta">
+                    <span>${eh(latest.sourceName || '')}</span>
+                    <span>${formatDate(latest.pubDate)}</span>
+                </div>
+                <span class="cat-card-more">뉴스 보기 →</span>
+            </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.sn-company-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const sym = card.dataset.symbol;
+            showSNDetail(sym, grouped[sym]);
+        });
+    });
+
+    translateSNHeadlines(grouped, symbols);
+}
+
+async function translateSNHeadlines(grouped, symbols) {
+    for (const sym of symbols) {
+        if (!document.getElementById('sn-company-grid').isConnected) return;
+        const latest = grouped[sym][0];
+        const kr = await translate(latest.title).catch(() => latest.title);
+        if (kr !== latest.title) {
+            grouped[sym][0] = { ...latest, title: kr };
+            const el = document.querySelector(`.sn-company-card[data-symbol="${ea(sym)}"] .sn-card-headline`);
+            if (el) el.textContent = kr;
+        }
+        await sleep(80);
+    }
+}
+
+function showSNDetail(symbol, articles) {
+    const name = KR_NAMES[symbol] || symbol;
+    document.getElementById('sn-detail-title').textContent = `${symbol.replace('^','')} · ${name}`;
+    hide('sn-overview');
+
+    const sorted = [...articles].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+    const container = document.getElementById('sn-detail-list');
+    renderAndTranslateList(sorted.map(a => ({ ...a })), container, 'green');
+    show('sn-detail');
+}
+
+document.getElementById('sn-back-btn').addEventListener('click', () => {
+    hide('sn-detail');
+    show('sn-overview');
+});
 
 // ── Stock Tracker View ─────────────────────────────────
 
@@ -686,9 +768,6 @@ STOCK_CATS.forEach(cat => {
 
 setupNewsSearch('ai-search', 'ai-search-clear', 'ai-search-count',
     () => document.querySelectorAll('#ai-detail-list .nl-item'));
-
-setupNewsSearch('sn-search', 'sn-search-clear', 'sn-search-count',
-    () => document.querySelectorAll('#sn-list .nl-item'));
 
 setupStockSearch();
 

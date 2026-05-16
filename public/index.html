@@ -72,19 +72,24 @@
 
             <!-- ── 주식 뉴스 뷰 ── -->
             <div id="sn-view" class="view-section hidden">
-                <div class="news-cat-bar" id="sn-cat-bar"></div>
-                <div class="search-wrap">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" class="search-input" id="sn-search" placeholder="기사 제목, 종목, 출처 검색...">
-                    <button class="search-clear" id="sn-search-clear" title="지우기">✕</button>
+                <!-- 종목별 개요 -->
+                <div id="sn-overview">
+                    <div class="news-cat-bar" id="sn-cat-bar"></div>
+                    <div id="sn-loading" class="loading hidden">
+                        <div class="spinner" style="border-top-color:#10b981"></div>
+                        <p id="sn-loading-text">뉴스를 불러오는 중...</p>
+                    </div>
+                    <div id="sn-error" class="error-msg hidden"></div>
+                    <div id="sn-company-grid" class="sn-company-grid"></div>
                 </div>
-                <p class="search-count hidden" id="sn-search-count"></p>
-                <div id="sn-loading" class="loading hidden">
-                    <div class="spinner" style="border-top-color:#10b981"></div>
-                    <p id="sn-loading-text">뉴스를 불러오는 중...</p>
+                <!-- 종목 상세 뉴스 -->
+                <div id="sn-detail" class="hidden">
+                    <div class="detail-header">
+                        <button class="back-btn" id="sn-back-btn">← 전체 보기</button>
+                        <h3 id="sn-detail-title" class="detail-title"></h3>
+                    </div>
+                    <div id="sn-detail-list" class="news-list-view"></div>
                 </div>
-                <div id="sn-error" class="error-msg hidden"></div>
-                <div id="sn-list" class="news-list-view"></div>
             </div>
 
             <!-- ── 해외주식 뷰 ── -->

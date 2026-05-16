@@ -328,6 +328,37 @@ main { padding: 32px 0 48px; }
   background: rgba(255,255,255,.8); border-radius: 10px;
 }
 
+/* ── Stock News Company Grid ── */
+.sn-company-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+}
+.sn-company-card {
+  background: var(--card-bg); border-radius: var(--radius);
+  border: 1px solid var(--border); overflow: hidden;
+  box-shadow: var(--shadow-sm); cursor: pointer;
+  display: flex; flex-direction: column;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.sn-company-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: #cbd5e1; }
+.sn-card-header {
+  padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.sn-card-info { flex: 1; min-width: 0; }
+.sn-news-count {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; white-space: nowrap;
+  background: var(--stock-light); color: var(--stock-color); border-radius: 20px;
+}
+.sn-card-headline {
+  padding: 14px 16px; font-size: 13px; font-weight: 600; line-height: 1.5;
+  color: var(--text-primary); flex: 1;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.sn-card-meta {
+  padding: 0 16px 10px; display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--text-muted);
+}
+
 /* ── Footer ── */
 .footer { background: var(--header-bg); padding: 24px 0; text-align: center; border-top: 1px solid #1e293b; }
 .footer p { color: #475569; font-size: 13px; line-height: 1.8; }
@@ -337,12 +368,14 @@ main { padding: 32px 0 48px; }
 @media (max-width: 1024px) {
   .stock-grid        { grid-template-columns: repeat(2, 1fr); }
   .cat-overview-grid { grid-template-columns: repeat(2, 1fr); }
+  .sn-company-grid   { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
   .container         { padding: 0 16px; }
   .header-top        { flex-wrap: wrap; gap: 10px; }
   .stock-grid        { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .cat-overview-grid { grid-template-columns: 1fr; }
+  .sn-company-grid   { grid-template-columns: 1fr; }
   .cat-btn           { padding: 10px 14px; font-size: 13px; }
   .logo h1           { font-size: 17px; }
   .sc-price-krw      { font-size: 17px; }
